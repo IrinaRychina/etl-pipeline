@@ -1,3 +1,4 @@
 /.idea
 /logs
 /config
+/dags/__pycache__
