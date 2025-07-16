@@ -1,0 +1,9 @@
+FROM apache/airflow:3.0.3-python3.10
+
+# Скопируем requirements.txt
+COPY requirements.txt /
+
+# Установим пакеты под пользователем airflow
+USER airflow
+
+RUN pip install --no-cache-dir -r /requirements.txt
