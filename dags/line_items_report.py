@@ -40,7 +40,12 @@ with DAG(
 
         print("Path to dataset files:", DATA_PATH)
 
-        spark = SparkSession.builder.getOrCreate()
+        spark = SparkSession.builder \
+            .appName("line_items_report") \
+            .config("spark.driver.memory", "2g") \
+            .config("spark.executor.memory", "2g") \
+            .config("spark.sql.shuffle.partitions", "8") \
+            .getOrCreate()
         df_lineitem = spark.read.parquet(DATA_PATH + "/lineitem.parquet")
         df_lineitem.printSchema()
         result = df_lineitem.groupBy(df_lineitem.l_orderkey).agg(
