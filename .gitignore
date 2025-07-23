@@ -2,3 +2,4 @@
 /logs
 /config
 /dags/__pycache__
+/clickhouse_data

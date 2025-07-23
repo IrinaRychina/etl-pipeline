@@ -75,6 +75,7 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    AIRFLOW_CONN_CLICKHOUSE_DEFAULT: http://default:fbed5cab47739c349ad7dc96763f8ac066ba1eeb96d9b465d8729c73e705c10f@clickhouse:8123/
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -333,6 +334,17 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    ports:
+      - "8123:8123"  # HTTP API
+      - "9000:9000"  # native protocol
+    volumes:
+      - ./clickhouse_data:/var/lib/clickhouse
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: fbed5cab47739c349ad7dc96763f8ac066ba1eeb96d9b465d8729c73e705c10f
 
 volumes:
   postgres-db-volume:
