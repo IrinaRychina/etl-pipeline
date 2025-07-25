@@ -4,7 +4,7 @@ import os
 from airflow.operators.python import PythonOperator
 from airflow.sdk import DAG
 
-DATA_PATH = "/opt/airflow/data/tpch"
+DATA_PATH = "/opt/airflow/dags/data/tpch"
 
 with DAG(
         "line_items_report",
@@ -60,12 +60,52 @@ with DAG(
             sf.sum(sf.when(df_lineitem['l_returnflag'] == "N", 1).otherwise(0)).alias("N_return_flags"),
         ).sort(df_lineitem.l_orderkey.asc())
         result.show(5)
-
+        os.makedirs(DATA_PATH + "/output/line_items_report", exist_ok=True)
+        result.write \
+            .mode("overwrite") \
+            .format("parquet") \
+            .save(DATA_PATH + "/output/line_items_report")
         return 'success'
+
+
+    def save_data(**kwargs):
+        import pandas as pd
+        import clickhouse_connect
+        from airflow.hooks.base import BaseHook
+
+        df = pd.read_parquet(DATA_PATH + "/output/line_items_report")
+
+        conn = BaseHook.get_connection("clickhouse_default")
+        client = clickhouse_connect.get_client(
+            host=conn.host,
+            port=8123,
+            username=conn.login,
+            password=conn.password
+        )
+
+        create_table_sql = """
+        CREATE TABLE IF NOT EXISTS line_items_report (
+            l_orderkey UInt32,
+            count UInt32,
+            sum_extendprice Float64,
+            mean_discount Float64,
+            mean_tax Float64,
+            delivery_days Float64,
+            A_return_flags UInt32,
+            R_return_flags UInt32,
+            N_return_flags UInt32
+        ) ENGINE = MergeTree()
+        ORDER BY l_orderkey
+        """
+        client.command(create_table_sql)
+
+        client.insert_df("line_items_report", df)
+
+        print("✅ Data inserted into ClickHouse successfully")
 
 
     download_data = PythonOperator(task_id="download_data", python_callable=download_data)
     process_data = PythonOperator(task_id="process_data", python_callable=process_data)
+    save_data = PythonOperator(task_id="save_data", python_callable=save_data)
 
-    download_data >> process_data
-    # download_data
+    download_data >> process_data >> save_data
