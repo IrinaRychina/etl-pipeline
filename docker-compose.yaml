@@ -340,8 +340,6 @@ services:
     ports:
       - "8123:8123"  # HTTP API
       - "9000:9000"  # native protocol
-    volumes:
-      - ./clickhouse_data:/var/lib/clickhouse
     environment:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: fbed5cab47739c349ad7dc96763f8ac066ba1eeb96d9b465d8729c73e705c10f
