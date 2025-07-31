@@ -47,8 +47,7 @@ with DAG(
     extract = PythonOperator(task_id="extract", python_callable=entity_tasks.download_data)
     end = EmptyOperator(task_id="end")
 
-    entities = ["lineitems"]
-    # entities = ["customers", "lineitems", "orders", "parts", "suppliers"]
+    entities = ["customers", "lineitems", "orders", "parts", "suppliers"]
 
     for entity in entities:
         transform = PythonOperator(
