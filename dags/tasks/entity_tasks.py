@@ -176,13 +176,74 @@ def transform_lineitems(**kwargs):
     return 'success'
 
 def datamart_customers(**kwargs):
-    print("Building datamart for customers")
+    print("Building datamart for customers...")
+    df = pd.read_parquet(DATA_PATH + "/output/customers_report")
+
+    conn = BaseHook.get_connection("clickhouse_default")
+    client = clickhouse_connect.get_client(
+        host=conn.host,
+        port=8123,
+        username=conn.login,
+        password=conn.password
+    )
+
+    client.command("DROP TABLE IF EXISTS customers_report")
+    create_table_sql = """
+               CREATE TABLE IF NOT EXISTS customers_report (
+                   r_name String,
+                   n_name String,
+                   c_mktsegment String,
+                   unique_customers_count UInt64,
+                   avg_acctbal Float64,
+                   mean_acctbal Float64,
+                   min_acctbal Float64,
+                   max_acctbal Float64
+               ) ENGINE = MergeTree()
+               ORDER BY (n_name, c_mktsegment)
+               """
+    client.command(create_table_sql)
+
+    client.insert_df("customers_report", df)
+
+    print("✅ Data inserted into customers_report successfully")
 
 def datamart_orders(**kwargs):
-    print("Building datamart for orders")
+    print("Building datamart for orders...")
+    df = pd.read_parquet(DATA_PATH + "/output/orders_report")
+
+    conn = BaseHook.get_connection("clickhouse_default")
+    client = clickhouse_connect.get_client(
+        host=conn.host,
+        port=8123,
+        username=conn.login,
+        password=conn.password
+    )
+
+    client.command("DROP TABLE IF EXISTS orders_report")
+    create_table_sql = """
+                   CREATE TABLE IF NOT EXISTS orders_report (
+                       o_month String,
+                       n_name String,
+                       o_orderpriority String,
+                       orders_count UInt64,
+                       avg_order_price Float64,
+                       sum_order_price Float64,
+                       min_order_price Float64,
+                       max_order_price Float64,
+                       f_order_status UInt32,
+                       o_order_status UInt32,
+                       p_order_status UInt32
+                   ) ENGINE = MergeTree()
+                   ORDER BY (n_name, o_orderpriority)
+                   """
+    client.command(create_table_sql)
+
+    client.insert_df("orders_report", df)
+
+    print("✅ Data inserted into orders_report successfully")
 
 def datamart_lineitems(**kwargs):
-    print("Building datamart for lineitems")
+    print("Building datamart for lineitems...")
     df = pd.read_parquet(DATA_PATH + "/output/line_items_report")
 
     conn = BaseHook.get_connection("clickhouse_default")
@@ -211,13 +272,75 @@ def datamart_lineitems(**kwargs):
 
     client.insert_df("line_items_report", df)
 
-    print("✅ Data inserted into ClickHouse successfully")
+    print("✅ Data inserted into line_items_report successfully")
 
 def datamart_parts(**kwargs):
-    print("Building datamart for parts")
+    print("Building datamart for parts...")
+    df = pd.read_parquet(DATA_PATH + "/output/parts_report")
+
+    conn = BaseHook.get_connection("clickhouse_default")
+    client = clickhouse_connect.get_client(
+        host=conn.host,
+        port=8123,
+        username=conn.login,
+        password=conn.password
+    )
+
+    client.command("DROP TABLE IF EXISTS parts_report")
+    create_table_sql = """
+                       CREATE TABLE IF NOT EXISTS parts_report (
+                           n_name String,
+                           p_type String,
+                           p_container String,
+                           parts_count UInt64,
+                           avg_retailprice Float64,
+                           size UInt64,
+                           mean_retailprice Float64,
+                           min_retailprice Float64,
+                           max_retailprice Float64,
+                           avg_supplycost Float64,
+                           mean_supplycost Float64,
+                           min_supplycost Float64,
+                           max_supplycost Float64
+                       ) ENGINE = MergeTree()
+                       ORDER BY (n_name, p_type, p_container)
+                       """
+    client.command(create_table_sql)
+
+    client.insert_df("parts_report", df)
+
+    print("✅ Data inserted into parts_report successfully")
 
 def datamart_suppliers(**kwargs):
-    print("Building datamart for suppliers")
+    print("Building datamart for suppliers...")
+    df = pd.read_parquet(DATA_PATH + "/output/suppliers_report")
+
+    conn = BaseHook.get_connection("clickhouse_default")
+    client = clickhouse_connect.get_client(
+        host=conn.host,
+        port=8123,
+        username=conn.login,
+        password=conn.password
+    )
+
+    client.command("DROP TABLE IF EXISTS suppliers_report")
+    create_table_sql = """
+                           CREATE TABLE IF NOT EXISTS suppliers_report (
+                               r_name String,
+                               n_name String,
+                               unique_supplers_count UInt64,
+                               avg_acctbal Float64,
+                               mean_acctbal Float64,
+                               min_acctbal Float64,
+                               max_acctbal Float64
+                           ) ENGINE = MergeTree()
+                           ORDER BY (r_name, n_name)
+                           """
+    client.command(create_table_sql)
+
+    client.insert_df("suppliers_report", df)
+
+    print("✅ Data inserted into suppliers_report successfully")
 
 def download_data(**kwargs):
     path = kagglehub.dataset_download("marcogorelli/tpc-h-parquet-s-1")
